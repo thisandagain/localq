@@ -30,8 +30,11 @@ queue.push('foo');
 ```
 
 ### API
-Events: job, error, drain
-Methods: push(), start(), stop(), flush()
+#### Events: 
+job, error, drain
+
+##### Methods: 
+push(), start(), stop(), flush()
 
 ---
 
