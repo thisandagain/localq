@@ -4,7 +4,8 @@
   "description": "A persistent job queue for the browser.",
   "main": "index.js",
   "directories": {
-    "test": "test"
+    "build": "make build",
+    "test": "make test"
   },
   "scripts": {
     "test": "make test",

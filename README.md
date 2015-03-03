@@ -42,10 +42,10 @@ push(), start(), pause(), flush()
 
 ### To Build
 ```bash
-make build
+npm run build
 ```
 
 ### To Test
 ```bash
-make test
+npm test
 ```
