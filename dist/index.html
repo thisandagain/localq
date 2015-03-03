@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <title>Local Queue</title>
+  </head>
+
+  <body>
+    <script src="./localq.js"></script>
+    <script>
+      var queue = localq({
+        interval: 1000, // milliseconds
+        size: 4980736,  // bytes
+        name: 'localq', // string
+        retry: 10,      // unsigned integer
+        debug: true     // boolean
+      });
+
+      queue.worker = function (job, callback) {
+          callback('Fail boat!');
+      };
+
+      queue.push('allthethings', 5, function (err) {
+          if (err) throw Error(err);
+      });
+    </script>
+  </body>
+</html>

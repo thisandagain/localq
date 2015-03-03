@@ -1,0 +1,54 @@
+{
+  "name": "localq",
+  "version": "1.0.0",
+  "description": "A persistent job queue for the browser.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "make test",
+    "prepublish": "make build && make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:thisandagain/localq"
+  },
+  "keywords": [
+    "queue",
+    "localforage",
+    "localstorage",
+    "indexedb",
+    "persistent",
+    "browser"
+  ],
+  "author": "Andrew Sliwinski <andrewsliwinski@acm.org>",
+  "license": "MPL",
+  "bugs": {
+    "url": "https://github.com/thisandagain/local-queue/issues"
+  },
+  "homepage": "https://github.com/thisandagain/local-queue",
+  "dependencies": {
+    "localforage": "~1.2.0"
+  },
+  "devDependencies": {
+    "browserify": "~7.0.3",
+    "jscs": "~1.8.1",
+    "jshint": "~2.5.11",
+    "tape": "~3.0.3",
+    "uglify-js": "~2.4.16"
+  },
+  "testling": {
+    "files": "test/*.js",
+    "browsers": [
+      "ie/6..latest",
+      "chrome/22..latest",
+      "firefox/16..latest",
+      "safari/latest",
+      "opera/11.0..latest",
+      "iphone/6",
+      "ipad/6",
+      "android-browser/latest"
+    ]
+  }
+}
