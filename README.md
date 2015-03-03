@@ -1,4 +1,4 @@
-### local-queue
+### localq
 #### A persistent job queue for the browser.
 
 ### Installation
@@ -8,33 +8,35 @@ npm install localq
 
 ### Basic Use
 ```js
-var queue = require('localq')({
-    concurrency: 1,     // how many jobs can run at once
+var localq = require('localq');
+var queue = localq({
     expire: null,       // how long until a job expires (ms)
     timeout: 5000,      // how long until a job timeouts & is considered "failed" (ms)
     retry: 3            // how many times a job should be retried
+
+    interval: 1000      // speed at which the queue looks for new jobs (ms)
+    size: 4980736       // maximum size of the queue (bytes)
+    name: 'localq'      // name of the database within IndexedDB
 });
 
-queue.on('job', function (job, callback) {
-    console.log(job);   // prints: "foo"
-    callback(null);
-});
-
-queue.on('error', function (err) {
-    console.log(err);
-});
+queue.worker = function (job, callback) {
+    console.dir(job);   // prints "Do some work!"
+    callback('Oh no! It failed');
+};
 ```
 
 ```js
-queue.push('foo');
+queue.push('Do some work!', 5, function (err) {
+    console.dir(err);
+});
 ```
 
 ### API
-#### Events: 
-job, error, drain
+#### Properties:
+interval, size, name, retry, debug, worker
 
 ##### Methods: 
-push(), start(), stop(), flush()
+push(), start(), pause(), flush()
 
 ---
 

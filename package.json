@@ -22,7 +22,10 @@
     "persistent",
     "browser"
   ],
-  "author": "Andrew Sliwinski <andrewsliwinski@acm.org>",
+  "author": "Andrew Sliwinski <a@mozillafoundation.org>",
+  "contributors": [
+    "Adam Lofting <adam@mozillafoundation.org>"
+  ],
   "license": "MPL",
   "bugs": {
     "url": "https://github.com/thisandagain/local-queue/issues"
