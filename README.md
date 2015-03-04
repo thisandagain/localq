@@ -1,6 +1,8 @@
 ### localq
 #### A persistent job queue for the browser.
 
+[![Build Status](https://travis-ci.org/thisandagain/localq.svg?branch=master)](https://travis-ci.org/thisandagain/localq)
+
 ### Installation
 ```bash
 npm install localq
