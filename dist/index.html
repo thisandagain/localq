@@ -7,10 +7,14 @@
     <script src="./localq.js"></script>
     <script>
       var queue = localq({
+        expire: null,   // unsigned integer
+        timeout: 5000,  // unsigned integer
+        retry: 10,      // unsigned integer
+
         interval: 1000, // milliseconds
         size: 4980736,  // bytes
         name: 'localq', // string
-        retry: 10,      // unsigned integer
+
         debug: true     // boolean
       });
 

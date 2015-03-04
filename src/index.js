@@ -9,7 +9,7 @@
 var inherits = require('util').inherits;
 var emitter = require('events').EventEmitter;
 
-var Storage = require('./lib/storage');
+var Storage = require('./storage');
 
 /**
  * Constructor
@@ -18,10 +18,14 @@ function Queue (opts) {
   var self = this;
 
   // Parse options
+  self._expire = opts.expire || null;
+  self._timeout = opts.timeout || 5000;
+  self._retry = opts.retry || 10;
+
   self._interval = opts.interval || 1000;
   self._size = opts.size || 4980736;
   self._name = opts.name || 'localq';
-  self._retry = opts.retry || 10;
+  
   self._debug = opts.debug || false;
   self._poll = null;
 

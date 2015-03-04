@@ -1,185 +1,4 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.localq=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/**
- * A persistent job queue for browsers.
- *
- * @package localq
- * @author  Adam Lofting <adam@mozillafoundation.org>
- *          Andrew Sliwinski <a@mozillafoundation.org>
- */
-
-var inherits = require('util').inherits;
-var emitter = require('events').EventEmitter;
-
-var Storage = require('./lib/storage');
-
-/**
- * Constructor
- */
-function Queue (opts) {
-  var self = this;
-
-  // Parse options
-  self._interval = opts.interval || 1000;
-  self._size = opts.size || 4980736;
-  self._name = opts.name || 'localq';
-  self._retry = opts.retry || 10;
-  self._debug = opts.debug || false;
-  self._poll = null;
-
-  // Storage
-  self._storage = new Storage(self._name, self._size);
-  self._storage.push({}, function (err) {
-    // console.dir(err);
-  });
-
-  // @todo Watch for task expiration
-  // @todo Watch for overflow (size)
-
-  // Default worker
-  self.worker = function(job, callback) {
-    callback('Worker not specified');
-  };
-
-  // Logger
-  self.log = function(msg) {
-    if (self._debug) console.log('[localq] ' + msg);
-  };
-
-  // Start polling
-  self.start();
-
-  // if (self._debug) console.dir(self);
-}
-
-/**
- * Inherit from event emitter
- */
-inherits(Queue, emitter);
-
-Queue.prototype.push = function(job, retry, callback) {
-  var self = this;
-
-  // Parse arguments
-  if (typeof retry === 'undefined') retry = self._retry;
-  if (typeof retry === 'function') {
-    callback = retry;
-    retry = self._retry;
-  }
-
-  // Append metadata and push to storage
-  self._storage.push({
-    payload: job,
-    retry: retry,
-    stamp: Math.floor(Date.now() / 1000)
-  }, callback);
-};
-
-Queue.prototype.flush = function(callback) {
-  var self = this;
-  self._storage.flush(callback);
-};
-
-Queue.prototype.pause = function() {
-  var self = this;
-  clearInterval(self._poll);
-};
-
-Queue.prototype.start = function() {
-  var self = this;
-
-  // Define a single unit of work
-  var tick = function () {
-    self._storage.pull(function (err, job) {
-      if (err) self.log(err);
-      if (typeof job === 'undefined') return;
-
-      self.log('Processing job');
-      self.worker(job, function (err) {
-        if (!err) return;
-        
-        // Handle the error and return job to the queue
-        self.log(err);
-        if (job.retry > 0) {
-          job.retry--;
-          job.stamp = Math.floor(Date.now() / 1000);
-          self._storage.push(job);
-        }
-      });
-    });
-  };
-
-  // Start interval timer
-  self._poll = setInterval(tick, self._interval);
-};
-
-/**
- * Export
- */
-module.exports = function(opts) {
-  return new Queue(opts);
-};
-
-},{"./lib/storage":2,"events":3,"util":7}],2:[function(require,module,exports){
-var localforage = require('localforage');
-
-/**
- * Constructor
- */
-function Storage(name, size) {
-  var _this = this;
-
-  // IndexedDB configuration
-  localforage.config({
-    name: name,
-    size: size
-  });
-
-  // Init queue if it does not exist or is corrupted
-  localforage.getItem('q', function(err, obj) {
-    if (err || obj === null) _this.flush();
-    if (typeof obj !== 'object') _this.flush();
-    if (!Array.isArray(obj)) _this.flush();
-  });
-}
-
-Storage.prototype.push = function(obj, callback) {
-  localforage.getItem('q', function(err, q) {
-    if (err) return callback('Could not access DB');
-
-    // Add item to end of the array
-    q.push(obj);
-
-    // Persist
-    localforage.setItem('q', q, callback);
-  });
-};
-
-Storage.prototype.pull = function(callback) {
-  localforage.getItem('q', function(err, q) {
-    if (err) return callback('Could not access DB');
-
-    // Remove first item from the array
-    var task = q.shift();
-
-    // Persist
-    localforage.setItem('q', q, function(err) {
-      if (err) return callback('Could not update the DB');
-      callback(null, task);
-    });
-  });
-};
-
-Storage.prototype.flush = function(callback) {
-  localforage.setItem('q', [], callback);
-};
-
-Storage.prototype.audit = function(callback) {
-  localforage.getItem('q', callback);
-};
-
-module.exports = Storage;
-
-},{"localforage":14}],3:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -482,7 +301,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],4:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -507,7 +326,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],5:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -595,14 +414,14 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],6:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],7:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -1192,7 +1011,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"_process":5,"inherits":4}],8:[function(require,module,exports){
+},{"./support/isBuffer":4,"_process":3,"inherits":2}],6:[function(require,module,exports){
 'use strict';
 
 var asap = require('asap')
@@ -1299,7 +1118,7 @@ function doResolve(fn, onFulfilled, onRejected) {
   }
 }
 
-},{"asap":10}],9:[function(require,module,exports){
+},{"asap":8}],7:[function(require,module,exports){
 'use strict';
 
 //This file contains then/promise specific extensions to the core promise API
@@ -1481,7 +1300,7 @@ Promise.prototype['catch'] = function (onRejected) {
   return this.then(null, onRejected);
 }
 
-},{"./core.js":8,"asap":10}],10:[function(require,module,exports){
+},{"./core.js":6,"asap":8}],8:[function(require,module,exports){
 (function (process){
 
 // Use the fastest possible means to execute a task in a future turn
@@ -1598,7 +1417,7 @@ module.exports = asap;
 
 
 }).call(this,require('_process'))
-},{"_process":5}],11:[function(require,module,exports){
+},{"_process":3}],9:[function(require,module,exports){
 // Some code originally from async_storage.js in
 // [Gaia](https://github.com/mozilla-b2g/gaia).
 (function() {
@@ -2012,7 +1831,7 @@ module.exports = asap;
     }
 }).call(window);
 
-},{"promise":9}],12:[function(require,module,exports){
+},{"promise":7}],10:[function(require,module,exports){
 // If IndexedDB isn't available, we'll fall back to localStorage.
 // Note that this will have considerable performance and storage
 // side-effects (all data will be serialized on save and only data that
@@ -2507,7 +2326,7 @@ module.exports = asap;
     }
 }).call(window);
 
-},{"promise":9}],13:[function(require,module,exports){
+},{"promise":7}],11:[function(require,module,exports){
 /*
  * Includes code from:
  *
@@ -3095,7 +2914,7 @@ module.exports = asap;
     }
 }).call(window);
 
-},{"promise":9}],14:[function(require,module,exports){
+},{"promise":7}],12:[function(require,module,exports){
 (function() {
     'use strict';
 
@@ -3517,5 +3336,190 @@ module.exports = asap;
     }
 }).call(window);
 
-},{"./drivers/indexeddb":11,"./drivers/localstorage":12,"./drivers/websql":13,"promise":9}]},{},[1])(1)
+},{"./drivers/indexeddb":9,"./drivers/localstorage":10,"./drivers/websql":11,"promise":7}],13:[function(require,module,exports){
+/**
+ * A persistent job queue for browsers.
+ *
+ * @package localq
+ * @author  Adam Lofting <adam@mozillafoundation.org>
+ *          Andrew Sliwinski <a@mozillafoundation.org>
+ */
+
+var inherits = require('util').inherits;
+var emitter = require('events').EventEmitter;
+
+var Storage = require('./storage');
+
+/**
+ * Constructor
+ */
+function Queue (opts) {
+  var self = this;
+
+  // Parse options
+  self._expire = opts.expire || null;
+  self._timeout = opts.timeout || 5000;
+  self._retry = opts.retry || 10;
+
+  self._interval = opts.interval || 1000;
+  self._size = opts.size || 4980736;
+  self._name = opts.name || 'localq';
+  
+  self._debug = opts.debug || false;
+  self._poll = null;
+
+  // Storage
+  self._storage = new Storage(self._name, self._size);
+  self._storage.push({}, function (err) {
+    // console.dir(err);
+  });
+
+  // @todo Watch for task expiration
+  // @todo Watch for overflow (size)
+
+  // Default worker
+  self.worker = function(job, callback) {
+    callback('Worker not specified');
+  };
+
+  // Logger
+  self.log = function(msg) {
+    if (self._debug) console.log('[localq] ' + msg);
+  };
+
+  // Start polling
+  self.start();
+
+  // if (self._debug) console.dir(self);
+}
+
+/**
+ * Inherit from event emitter
+ */
+inherits(Queue, emitter);
+
+Queue.prototype.push = function(job, retry, callback) {
+  var self = this;
+
+  // Parse arguments
+  if (typeof retry === 'undefined') retry = self._retry;
+  if (typeof retry === 'function') {
+    callback = retry;
+    retry = self._retry;
+  }
+
+  // Append metadata and push to storage
+  self._storage.push({
+    payload: job,
+    retry: retry,
+    stamp: Math.floor(Date.now() / 1000)
+  }, callback);
+};
+
+Queue.prototype.flush = function(callback) {
+  var self = this;
+  self._storage.flush(callback);
+};
+
+Queue.prototype.pause = function() {
+  var self = this;
+  clearInterval(self._poll);
+};
+
+Queue.prototype.start = function() {
+  var self = this;
+
+  // Define a single unit of work
+  var tick = function () {
+    self._storage.pull(function (err, job) {
+      if (err) self.log(err);
+      if (typeof job === 'undefined') return;
+
+      self.log('Processing job');
+      self.worker(job, function (err) {
+        if (!err) return;
+        
+        // Handle the error and return job to the queue
+        self.log(err);
+        if (job.retry > 0) {
+          job.retry--;
+          job.stamp = Math.floor(Date.now() / 1000);
+          self._storage.push(job);
+        }
+      });
+    });
+  };
+
+  // Start interval timer
+  self._poll = setInterval(tick, self._interval);
+};
+
+/**
+ * Export
+ */
+module.exports = function(opts) {
+  return new Queue(opts);
+};
+
+},{"./storage":14,"events":1,"util":5}],14:[function(require,module,exports){
+var localforage = require('localforage');
+
+/**
+ * Constructor
+ */
+function Storage(name, size) {
+  var _this = this;
+
+  // IndexedDB configuration
+  localforage.config({
+    name: name,
+    size: size
+  });
+
+  // Init queue if it does not exist or is corrupted
+  localforage.getItem('q', function(err, obj) {
+    if (err || obj === null) _this.flush();
+    if (typeof obj !== 'object') _this.flush();
+    if (!Array.isArray(obj)) _this.flush();
+  });
+}
+
+Storage.prototype.push = function(obj, callback) {
+  localforage.getItem('q', function(err, q) {
+    if (err) return callback('Could not access DB');
+
+    // Add item to end of the array
+    q.push(obj);
+
+    // Persist
+    localforage.setItem('q', q, callback);
+  });
+};
+
+Storage.prototype.pull = function(callback) {
+  localforage.getItem('q', function(err, q) {
+    if (err) return callback('Could not access DB');
+
+    // Remove first item from the array
+    var task = q.shift();
+
+    // Persist
+    localforage.setItem('q', q, function(err) {
+      if (err) return callback('Could not update the DB');
+      callback(null, task);
+    });
+  });
+};
+
+Storage.prototype.flush = function(callback) {
+  localforage.setItem('q', [], callback);
+};
+
+Storage.prototype.audit = function(callback) {
+  localforage.getItem('q', callback);
+};
+
+module.exports = Storage;
+
+},{"localforage":12}]},{},[13])(13)
 });
