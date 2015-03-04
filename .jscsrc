@@ -7,5 +7,7 @@
     "value": 80,
     "allowComments": true,
     "allowRegex": true
-  }
+  },
+  "disallowMultipleVarDecl": true,
+  "requireMultipleVarDecl": null
 }
