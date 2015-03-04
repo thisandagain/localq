@@ -3,13 +3,9 @@
   "version": "1.0.0",
   "description": "A persistent job queue for the browser.",
   "main": "index.js",
-  "directories": {
-    "build": "make build",
-    "test": "make test"
-  },
   "scripts": {
     "test": "make test",
-    "prepublish": "make build && make test"
+    "build": "make build"
   },
   "repository": {
     "type": "git",
